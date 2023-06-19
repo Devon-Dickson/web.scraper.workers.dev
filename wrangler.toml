@@ -1,5 +1,5 @@
 name = "web"
-main = "index.js"
+main = "index.ts"
 account_id = "71b8b36b4e3ecb2a6a7f60a46fcf0d31" # scraper.workers.dev
 workers_dev = true
 compatibility_date = "2023-06-19"
