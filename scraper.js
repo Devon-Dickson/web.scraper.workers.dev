@@ -24,6 +24,69 @@ class Scraper {
     return this
   }
 
+  async scrape() {
+    const epicuriousMap = {
+      title: "h1",
+      excerpt: '[data-testid="BodyWrapper"]',
+      ingredients_raw: '[data-testid="IngredientList"]',
+      steps_raw: '[data-testid="InstructionsWrapper"]'
+    }
+
+    const matches = {}
+
+    Object.entries(epicuriousMap).forEach(([key, selector]) => {
+      matches[key] = []
+
+      let nextText = ''
+
+      this.rewriter.on(selector, {
+        element(element) {
+          matches[key].push(true)
+          nextText = ''
+        },
+
+        text(text) {
+          nextText += text.text
+
+          if (text.lastInTextNode) {
+            if (true) nextText += ' '
+            matches[key].push(nextText)
+            nextText = ''
+          }
+        }
+      })
+
+      return matches
+    })
+
+    const transformed = this.rewriter.transform(this.response)
+
+    await transformed.arrayBuffer()
+
+    Object.entries(epicuriousMap).forEach(([key, selector]) => {
+      const nodeCompleteTexts = []
+
+      let nextText = ''
+
+      matches[key].forEach(text => {
+        if (text === true) {
+          if (nextText.trim() !== '') {
+            nodeCompleteTexts.push(cleanText(nextText))
+            nextText = ''
+          }
+        } else {
+          nextText += text
+        }
+      })
+
+      const lastText = cleanText(nextText)
+      if (lastText !== '') nodeCompleteTexts.push(lastText)
+      matches[key] = nodeCompleteTexts
+    })
+
+    return matches
+  }
+
   querySelector(selector) {
     this.selector = selector
     return this

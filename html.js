@@ -5,7 +5,7 @@ export default `<!doctype html>
     <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Web Scraper · By Adam Schwartz · Powered by Cloudflare Workers®</title>
+    <title>Web Scraper · By Devon · Powered by Cloudflare Workers®</title>
 
     <meta name="description" content="A simple web scraper powered by Cloudflare Workers®.">
     <meta name="keywords" content="Web scraper, screen scraper, scraper, Cloudflare Workers®, app">
@@ -295,14 +295,42 @@ export default `<!doctype html>
               <div class="FormField--text">
                 <label class="FormField--label" for="url">URL</label>
               </div>
-              <input class="Input" is-pristine id="url" type="text" inputmode="url" name="url" pattern="(?:(?:https?):\\/\\/)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))(?::\\d{2,5})?(?:\\/\\S*)?" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus />
+              <input
+                class="Input"
+                is-pristine
+                id="url"
+                type="text"
+                inputmode="url"
+                name="url"
+                pattern="(?:(?:https?):\\/\\/)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))(?::\\d{2,5})?(?:\\/\\S*)?"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                autofocus
+                value="https://www.epicurious.com/recipes/food/views/spicy-tahini-and-avocado-soba"
+              />
             </div>
 
             <div class="FormField">
               <div class="FormField--text">
                 <label class="FormField--label" for="selector">Selector</label>
               </div>
-              <input class="Input" is-pristine id="selector" type="text" name="selector" pattern="(?:\\*|(?:[#.]?[a-zA-Z0-9_-])+)(?:\\[(?:\\S.*)=(?:\\S.*)\\])?(?::\\S*)?(?:(?:\\s+)?(?:,|>)?(?:\\s+)?(?:\\*|(?:\\.?[a-zA-Z0-9_-])+)(?:\\[(?:\\S.*)~?\\^?=(?:\\S.*)\\])?(?::\\S*)?)*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
+              <input
+                class="Input"
+                is-pristine
+                id="selector"
+                type="text"
+                name="selector"
+                pattern="(?:\\*|(?:[#.]?[a-zA-Z0-9_-])+)(?:\\[(?:\\S.*)=(?:\\S.*)\\])?(?::\\S*)?(?:(?:\\s+)?(?:,|>)?(?:\\s+)?(?:\\*|(?:\\.?[a-zA-Z0-9_-])+)(?:\\[(?:\\S.*)~?\\^?=(?:\\S.*)\\])?(?::\\S*)?)*"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                value="h1"
+              />
             </div>
 
             <div class="FormField">

@@ -1,4 +1,9 @@
 name = "web"
-account_id = "2575000dd90a08dbbeb2b8cca2e64775" # scraper.workers.dev
-type = "webpack"
+main = "index.js"
+account_id = "71b8b36b4e3ecb2a6a7f60a46fcf0d31" # scraper.workers.dev
 workers_dev = true
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "dev-recipes-db"
+database_id = "99a61b69-e615-4ada-b908-94a2e4b579bd"
