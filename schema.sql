@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS Recipes (
     excerpt TEXT,
     ingredients_raw TEXT,
     steps_raw TEXT,
-    source_url TEXT NOT NULL
+    source_url TEXT NOT NULL,
+    image_url TEXT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_recipes_source_url ON recipes(source_url);

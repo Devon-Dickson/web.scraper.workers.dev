@@ -29,7 +29,8 @@ class Scraper {
       title: "h1",
       excerpt: '[data-testid="BodyWrapper"]',
       ingredients_raw: '[data-testid="IngredientList"]',
-      steps_raw: '[data-testid="InstructionsWrapper"]'
+      steps_raw: '[data-testid="InstructionsWrapper"]',
+      image_url: '[data-testid="ContentHeaderLeadAsset"] picture img'
     }
 
     const matches = {}
@@ -43,13 +44,17 @@ class Scraper {
         element(element) {
           matches[key].push(true)
           nextText = ''
+
+          if (element.hasAttribute("src")) {
+            matches[key].push(element.getAttribute("src"))
+          }
         },
 
         text(text) {
           nextText += text.text
 
           if (text.lastInTextNode) {
-            if (true) nextText += ' '
+            nextText += ' '
             matches[key].push(nextText)
             nextText = ''
           }
