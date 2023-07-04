@@ -11,6 +11,13 @@ const app = new Hono<Env>()
 app.use('/api/*', cors())
 
 /**
+ * Test Route to confirm the server is up
+ */
+app.get("/", async () => {
+  return new Response("Hello World", { status: 200 })
+})
+
+/**
  * List all Recipes
  */
 app.get("/api/recipes/", async ({ env }) => {
@@ -136,6 +143,179 @@ async function scrapeRecipe(url: string, env: Env["Bindings"]) {
   }
 
   return generateJSONResponse({ result })
+}
+
+app.post("/api/scrape/", async ({ req, env }) => {
+  const { url } = await req.json()
+
+  if (!url) {
+    return new Response(
+      "Missing url field",
+      { status: 400 }
+    )
+  }
+
+  // Scrape the JSON-LD data from the site
+  const scrapedData = await scrape(url)
+
+  // Collect the relevant fields and save them to the DB
+  const recipe = new Recipe(scrapedData)
+
+  console.log("Recipe: ", recipe)
+
+  try {
+    await env.DB.prepare(`
+      INSERT INTO Recipes (
+        name,
+        description,
+        url,
+        image,
+        thumbnailUrl,
+        keywords,
+        aggregateRatingCount,
+        aggregateRatingValue,
+        cookTime,
+        totalTime,
+        recipeYield,
+        recipeIngredient,
+        recipeInstructions,
+        authorName,
+        publisherName,
+        publisherLogo,
+        datePublished,
+        dateModified
+      )
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+      ON CONFLICT (url) DO
+      UPDATE SET
+        name=?1,
+        description=?2,
+        url=?3,
+        image=?4,
+        thumbnailUrl=?5,
+        keywords=?6,
+        aggregateRatingCount=?7,
+        aggregateRatingValue=?8,
+        cookTime=?9,
+        totalTime=?10,
+        recipeYield=?11,
+        recipeIngredient=?12,
+        recipeInstructions=?13,
+        authorName=?14,
+        publisherName=?15,
+        publisherLogo=?16,
+        datePublished=?17,
+        dateModified=?18
+    `)
+      .bind(
+        recipe.name,
+        recipe.description,
+        recipe.url,
+        recipe.image,
+        recipe.thumbnailUrl,
+        recipe.keywords,
+        recipe.aggregateRatingCount,
+        recipe.aggregateRatingValue,
+        recipe.cookTime,
+        recipe.totalTime,
+        recipe.recipeYield,
+        recipe.recipeIngredient,
+        recipe.recipeInstructions,
+        recipe.authorName,
+        recipe.publisherName,
+        recipe.publisherLogo,
+        recipe.datePublished,
+        recipe.dateModified
+      )
+      .run()
+
+  } catch(exc) {
+    console.error(exc)
+
+    if (exc.cause.message.includes("SqliteError: UNIQUE constraint failed")) {
+      console.log(`Recipe with URL of ${url} already exists!`)
+    }
+  }
+
+  return new Response(JSON.stringify(recipe), { status: 200 })
+})
+
+/**
+ * @name scrape
+ *
+ * HTMLRewriter is really meant to stream over a document,
+ * and then return "rewritten" HTML. But we can re-purpose
+ * it as a parse, by ensuring it's content is consumed,
+ * and collecting the pieces of the text (More like innerHTML)
+ * of the script tag we're looking for.
+ *
+ * @param url URL to be scraped
+ * @returns The LinkingData found at the URL
+ */
+const scrape = async (url: string) => {
+  let results: string = ""
+  const res = await fetch(url)
+  console.log("URL to scrape: ", url)
+
+  const htmlRewriter = new HTMLRewriter()
+    .on('script[type="application/ld+json"]', {
+      text({ text }) {
+        results += text
+      },
+    })
+
+  // Ensure we consume the Response stream so our handler is called.
+  await consume(htmlRewriter.transform(res).body)
+
+  // Turned the collected results back into an object
+  return JSON.parse(results)
+}
+
+const consume = async (stream: ReadableStream) => {
+  const reader = stream.getReader()
+  while (!(await reader.read()).done) { /* NOOP */}
+}
+
+class Recipe {
+  aggregateRatingCount: number;
+  aggregateRatingValue: number;
+  authorName: string;
+  cookTime: string;
+  dateModified: string;
+  datePublished: string;
+  description: string;
+  image: string;
+  keywords: string;
+  name: string;
+  publisherLogo: string;
+  publisherName: string;
+  recipeIngredient: string;
+  recipeInstructions: string;
+  recipeYield: string;
+  thumbnailUrl: string;
+  totalTime: string;
+  url: string;
+
+  constructor(data) {
+    this.aggregateRatingCount = data.aggregateRating?.ratingCount
+    this.aggregateRatingValue = data.aggregateRating?.ratingValue
+    this.authorName = data.author[0]?.name
+    this.cookTime = data.cookTime
+    this.dateModified = data.dateModified
+    this.datePublished = data.datePublished
+    this.description = data.description
+    this.image = data.image.find((image) => image.includes("1:1"))
+    this.keywords = data.keywords.join(", ")
+    this.name = data.name
+    this.publisherLogo = data.publisher?.logo?.url
+    this.publisherName = data.publisher?.name
+    this.recipeIngredient = data.recipeIngredient.join(" | ")
+    this.recipeInstructions = data.recipeInstructions.map((step) => JSON.stringify(step)).join(" | ")
+    this.recipeYield = data.recipeYield
+    this.thumbnailUrl = data.thumbnailUrl
+    this.totalTime = data.totalTime
+    this.url = data.url
+  }
 }
 
 export default app
