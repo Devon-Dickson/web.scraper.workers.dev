@@ -22,7 +22,7 @@ app.get("/", async () => {
  */
 app.get("/api/recipes/", async ({ env }) => {
   try {
-    const stmt = env.DB.prepare("SELECT * FROM Recipes")
+    const stmt = env.DB.prepare("SELECT * FROM Recipes ORDER BY id DESC")
 
     const { results } = await stmt.all()
 
@@ -74,7 +74,7 @@ app.get("/api/check_recipes/", async ({ req, env }) => {
   }
 
   try {
-    const stmt = env.DB.prepare("SELECT * FROM Recipes WHERE source_url=?1")
+    const stmt = env.DB.prepare("SELECT * FROM Recipes WHERE url=?1")
 
 
     const results = await stmt
@@ -90,60 +90,6 @@ app.get("/api/check_recipes/", async ({ req, env }) => {
     console.log(exc)
   }
 })
-
-/**
- * Scrape a new recipe
- */
-app.post("/api/recipes/", async ({ req, env }) => {
-  const { url } = await req.json()
-
-  if (!url) {
-    return new Response(
-      "Missing url parameter",
-      { status: 400 }
-    )
-  }
-
-  return scrapeRecipe(url, env)
-})
-
-
-async function scrapeRecipe(url: string, env: Env["Bindings"]) {
-  let scraper: Scraper, result: Recipe
-
-  try {
-    scraper = await new Scraper().fetch(url)
-  } catch (error) {
-    return generateErrorJSONResponse(error)
-  }
-
-  try {
-    // Assume that by passing the URL into new Scraper(), it knows what site we're on,
-    // and thus knows what the relevant scrapers are...
-    result = await scraper.scrape()
-
-  } catch (error) {
-    return generateErrorJSONResponse(error)
-  }
-
-  try {
-    if (env) {
-      // Save result to KV store, or DB if available?
-      await env.DB.prepare('INSERT INTO Recipes (title, excerpt, ingredients_raw, steps_raw, source_url, image_url) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
-        .bind(result.title[0], result.excerpt[0], result.ingredients_raw[0], result.steps_raw[0], url, result.image_url[0])
-        .run()
-    }
-
-  } catch(exc) {
-    console.debug(exc)
-
-    if (exc.cause.message.includes("SqliteError: UNIQUE constraint failed")) {
-      console.log(`Recipe with URL of ${url} already exists!`)
-    }
-  }
-
-  return generateJSONResponse({ result })
-}
 
 app.post("/api/scrape/", async ({ req, env }) => {
   const { url } = await req.json()
@@ -297,24 +243,26 @@ class Recipe {
   url: string;
 
   constructor(data) {
-    this.aggregateRatingCount = data.aggregateRating?.ratingCount
-    this.aggregateRatingValue = data.aggregateRating?.ratingValue
-    this.authorName = data.author[0]?.name
-    this.cookTime = data.cookTime
-    this.dateModified = data.dateModified
-    this.datePublished = data.datePublished
-    this.description = data.description
-    this.image = data.image.find((image) => image.includes("1:1"))
-    this.keywords = data.keywords.join(", ")
+    // Required fields
     this.name = data.name
-    this.publisherLogo = data.publisher?.logo?.url
-    this.publisherName = data.publisher?.name
-    this.recipeIngredient = data.recipeIngredient.join(" | ")
-    this.recipeInstructions = data.recipeInstructions.map((step) => JSON.stringify(step)).join(" | ")
-    this.recipeYield = data.recipeYield
-    this.thumbnailUrl = data.thumbnailUrl
-    this.totalTime = data.totalTime
     this.url = data.url
+
+    this.aggregateRatingCount = data.aggregateRating?.ratingCount || null
+    this.aggregateRatingValue = data.aggregateRating?.ratingValue || null
+    this.authorName = data.author[0]?.name || null
+    this.cookTime = data.cookTime || null
+    this.dateModified = data.dateModified || null
+    this.datePublished = data.datePublished || null
+    this.description = data.description || null
+    this.image = data.image.find((image) => image.includes("1:1")) || null
+    this.keywords = data.keywords.join(", ") || null
+    this.publisherLogo = data.publisher?.logo?.url || null
+    this.publisherName = data.publisher?.name || null
+    this.recipeIngredient = data.recipeIngredient.join(" | ") || null
+    this.recipeInstructions = data.recipeInstructions.map((step) => JSON.stringify(step)).join(" | ") || null
+    this.recipeYield = data.recipeYield || null
+    this.thumbnailUrl = data.thumbnailUrl || null
+    this.totalTime = data.totalTime || null
   }
 }
 
