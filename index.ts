@@ -156,7 +156,7 @@ app.post("/api/scrape/", async ({ req, env }) => {
       .bind(
         recipe.name,
         recipe.description,
-        recipe.url,
+        recipe.url || url,
         recipe.image,
         recipe.thumbnailUrl,
         recipe.keywords,
@@ -243,24 +243,45 @@ class Recipe {
   url: string;
 
   constructor(data) {
+
+    // King Arthur Flour nests data under an @graph key
+    if (data["@graph"]) {
+      data = data["@graph"][0]
+    }
+
     // Required fields
     this.name = data.name
     this.url = data.url
 
     this.aggregateRatingCount = data.aggregateRating?.ratingCount || null
     this.aggregateRatingValue = data.aggregateRating?.ratingValue || null
-    this.authorName = data.author[0]?.name || null
+    this.authorName = Array.isArray(data.author)
+      ? data.author[0].name
+      : data.author?.name
+      || null
     this.cookTime = data.cookTime || null
     this.dateModified = data.dateModified || null
     this.datePublished = data.datePublished || null
     this.description = data.description || null
-    this.image = data.image.find((image) => image.includes("1:1")) || null
-    this.keywords = data.keywords.join(", ") || null
+    this.image = Array.isArray(data.image)
+      ? data.image.find((image) => image.includes("1:1"))
+      : data.image?.url
+      || null
+    this.keywords = Array.isArray(data.keywords)
+      ? data.keywords.join(", ")
+      : data.keywords
+      || null
     this.publisherLogo = data.publisher?.logo?.url || null
     this.publisherName = data.publisher?.name || null
     this.recipeIngredient = data.recipeIngredient.join(" | ") || null
-    this.recipeInstructions = data.recipeInstructions.map((step) => JSON.stringify(step)).join(" | ") || null
-    this.recipeYield = data.recipeYield || null
+    this.recipeInstructions = Array.isArray(data.recipeInstructions)
+      ? data.recipeInstructions.map((step) => JSON.stringify(step)).join(" | ")
+      : data.recipeInstructions
+      || null
+    this.recipeYield = Array.isArray(data.recipeYield)
+      ? data.recipeYield.join(", ")
+      : data.recipeYield
+      || null
     this.thumbnailUrl = data.thumbnailUrl || null
     this.totalTime = data.totalTime || null
   }
